@@ -2,12 +2,13 @@
 
 ;; Copyright (C) 2017 Tobias Pisani
 ;; Copyright (C) 2018 Sebastien Chapuis, Fangrui Song
+;; Copyright (C) 2017-2026 emacs-lsp maintainers
 
 ;; Author: Sebastien Chapuis <sebastien@chapu.is>, Fangrui Song <i@maskray.me>
 ;; Keywords: languages, tools
 ;; URL: https://github.com/emacs-lsp/lsp-ui
-;; Package-Requires: ((emacs "26.1") (dash "2.18.0") (lsp-mode "6.0") (markdown-mode "2.3"))
-;; Version: 7.0.1
+;; Package-Requires: ((emacs "29.1") (dash "2.18.0") (lsp-mode "6.0") (markdown-mode "2.3"))
+;; Version: 9.0.0
 
 ;;; License
 ;;
@@ -38,11 +39,11 @@
 (require 'find-func)
 
 (defconst lsp-ui-resources-dir
-  (--> (find-library-name "lsp-ui")
-    (file-name-directory it)
-    (expand-file-name "resources" it)
-    (file-name-as-directory it)
-    (and (file-directory-p it) it))
+  (--> (or load-file-name (buffer-file-name))
+       (file-name-directory it)
+       (expand-file-name "resources" it)
+       (file-name-as-directory it)
+       (and (file-directory-p it) it))
   "Resource folder for package `lsp-ui'.")
 
 (require 'lsp-ui-sideline)
@@ -85,7 +86,7 @@ If the PATH is not in the workspace, it returns the original PATH."
 (defun lsp-ui--toggle (enable)
   (dolist (feature '(lsp-ui-peek lsp-ui-sideline lsp-ui-doc lsp-ui-imenu))
     (let* ((sym (--> (intern-soft (concat (symbol-name feature) "-enable"))
-                  (and (boundp it) it)))
+                     (and (boundp it) it)))
            (value (symbol-value sym))
            (fn (symbol-function sym)))
       (and (or value (not enable))
@@ -127,10 +128,10 @@ Both should have the form (FILENAME LINE COLUMN)."
         (< (cadr x) (cadr y))
       (< (caddr x) (caddr y)))))
 
-(defun lsp-ui--reference-triples (extra)
+(defun lsp-ui--reference-triples (include-declaration)
   "Return references as a list of (FILENAME LINE COLUMN) triples given EXTRA."
   (let ((refs (lsp-request "textDocument/references"
-                           (append (lsp--text-document-position-params) extra))))
+                           (lsp--make-reference-params nil include-declaration))))
     (sort
      (mapcar
       (-lambda ((&Location :uri :range (&Range :start (&Position :line :character))))
@@ -139,11 +140,11 @@ Both should have the form (FILENAME LINE COLUMN)."
      #'lsp-ui--location<)))
 
 ;; TODO Make it efficient
-(defun lsp-ui-find-next-reference (&optional extra)
+(defun lsp-ui-find-next-reference (&optional include-declaration)
   "Find next reference of the symbol at point."
   (interactive)
   (let* ((cur (list buffer-file-name (1- (line-number-at-pos)) (- (point) (line-beginning-position))))
-         (refs (lsp-ui--reference-triples extra))
+         (refs (lsp-ui--reference-triples include-declaration))
          (idx -1)
          (res (-first (lambda (ref) (cl-incf idx) (lsp-ui--location< cur ref)) refs)))
     (if res
@@ -156,11 +157,11 @@ Both should have the form (FILENAME LINE COLUMN)."
       (cons 0 0))))
 
 ;; TODO Make it efficient
-(defun lsp-ui-find-prev-reference (&optional extra)
+(defun lsp-ui-find-prev-reference (&optional include-declaration)
   "Find previous reference of the symbol at point."
   (interactive)
   (let* ((cur (list buffer-file-name (1- (line-number-at-pos)) (- (point) (line-beginning-position))))
-         (refs (lsp-ui--reference-triples extra))
+         (refs (lsp-ui--reference-triples include-declaration))
          (idx -1)
          (res (-last (lambda (ref) (and (lsp-ui--location< ref cur) (cl-incf idx))) refs)))
     (if res
@@ -171,7 +172,6 @@ Both should have the form (FILENAME LINE COLUMN)."
           (forward-char (caddr res))
           (cons idx (length refs)))
       (cons 0 0))))
-
 
 (provide 'lsp-ui)
 ;;; lsp-ui.el ends here

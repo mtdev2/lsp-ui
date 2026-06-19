@@ -1,6 +1,7 @@
 ;;; lsp-ui-peek.el --- Lsp-Ui-Peek  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017 Sebastien Chapuis
+;; Copyright (C) 2017-2026 emacs-lsp maintainers
 
 ;; Author: Sebastien Chapuis <sebastien@chapu.is>
 ;; URL: https://github.com/emacs-lsp/lsp-ui
@@ -70,10 +71,10 @@
 
 (defcustom lsp-ui-peek-fontify 'on-demand
   "Whether to fontify chunks of code (use semantics colors).
-WARNING: 'always can heavily slow the processing when
+WARNING: `always can heavily slow the processing when
 `lsp-ui-peek-expand-function' expands more than 1 file.
 It is recommended to keep the default value of `lsp-ui-peek-expand-function'
-when this variable is set to 'always."
+when this variable is set to `always."
   :type '(choice (const :tag "Never" never)
                  (const :tag "On demand" on-demand)
                  (const :tag "Always" always))
@@ -147,7 +148,7 @@ The function takes one parameter: a list of cons where the car is the
 filename and the cdr is the number of references in that file.
 It should returns a list of filenames to expand.
 WARNING: If you change this variable and expand more than 1 file, it is
-recommended to set `lsp-ui-peek-fontify' to 'never or 'on-demand, otherwise it
+recommended to set `lsp-ui-peek-fontify' to `never or `on-demand, otherwise it
 will cause performances issues.")
 
 (defvar-local lsp-ui-peek--overlay nil)
@@ -181,12 +182,12 @@ will cause performances issues.")
   (eval '(progn
            (evil-define-motion lsp-ui-peek-jump-backward (count)
                                (lsp-ui-peek--with-evil-jumps
-                                   (evil--jump-backward count)
-                                 (run-hooks 'xref-after-return-hook)))
+                                (evil--jump-backward count)
+                                (run-hooks 'xref-after-return-hook)))
            (evil-define-motion lsp-ui-peek-jump-forward (count)
                                (lsp-ui-peek--with-evil-jumps
-                                   (evil--jump-forward count)
-                                 (run-hooks 'xref-after-return-hook))))
+                                (evil--jump-forward count)
+                                (run-hooks 'xref-after-return-hook))))
         t))
 
 (defmacro lsp-ui-peek--prop (prop &optional string)
@@ -283,7 +284,7 @@ will cause performances issues.")
 
 (defun lsp-ui-peek--expand (xrefs)
   (let* ((to-expand (->> (--map (cons (plist-get it :file) (plist-get it :count)) xrefs)
-                      (funcall lsp-ui-peek-expand-function)))
+                         (funcall lsp-ui-peek-expand-function)))
          first)
     (while (nth lsp-ui-peek--selection lsp-ui-peek--list)
       (when (and (lsp-ui-peek--prop 'xrefs)
@@ -319,7 +320,12 @@ XREFS is a list of references/definitions."
                                 'face 'lsp-ui-peek-filename
                                 'file filename
                                 'xrefs xrefs)
-                    (propertize " " 'display `(space :align-to (- right-fringe ,(1+ (length len-str)))))
+                    (propertize " " 'display `(space :align-to (- right-fringe
+                                                                  ;; Account for Emacs TTY's window divider
+                                                                  ;; Without this leeway, the reference count
+                                                                  ;; string goes to next line - impairs readability
+                                                                  ,(if (display-graphic-p) 0 1)
+                                                                  ,(1+ (length len-str)))))
                     (propertize len-str 'face 'lsp-ui-peek-filename))
             lsp-ui-peek--list)))
   (setq lsp-ui-peek--list (nreverse lsp-ui-peek--list))
@@ -355,15 +361,15 @@ XREFS is a list of references/definitions."
           (header2 (format " %s %s" lsp-ui-peek--size-list
                            (string-remove-prefix "workspace/" (string-remove-prefix "textDocument/" lsp-ui-peek--method))))
           (ref-view (--> chunk
-                      (subst-char-in-string ?\t ?\s it)
-                      (concat header it)
-                      (split-string it "\n")))
+                         (subst-char-in-string ?\t ?\s it)
+                         (concat header it)
+                         (split-string it "\n")))
           (list-refs (->> lsp-ui-peek--list
-                       (--remove (lsp-ui-peek--prop 'lsp-ui-peek-hidden it))
-                       (-drop lsp-ui-peek--offset)
-                       (-take (1- lsp-ui-peek-peek-height))
-                       (lsp-ui-peek--fill (1- lsp-ui-peek-peek-height))
-                       (-concat (list header2)))))
+                          (--remove (lsp-ui-peek--prop 'lsp-ui-peek-hidden it))
+                          (-drop lsp-ui-peek--offset)
+                          (-take (1- lsp-ui-peek-peek-height))
+                          (lsp-ui-peek--fill (1- lsp-ui-peek-peek-height))
+                          (-concat (list header2)))))
     (setq lsp-ui-peek--last-xref (or xref lsp-ui-peek--last-xref))
     (lsp-ui-peek--peek-new ref-view list-refs)
     (and (fboundp 'lsp-ui-doc--hide-frame)
@@ -395,9 +401,9 @@ XREFS is a list of references/definitions."
 
 (defun lsp-ui-peek--insert-xrefs (xrefs filename index)
   (setq lsp-ui-peek--list (--> (lsp-ui-peek--get-xrefs-in-file (cons filename xrefs))
-                            (-map 'lsp-ui-peek--make-ref-line it)
-                            (-insert-at (1+ index) it lsp-ui-peek--list)
-                            (-flatten it)))
+                               (-map 'lsp-ui-peek--make-ref-line it)
+                               (-insert-at (1+ index) it lsp-ui-peek--list)
+                               (-flatten it)))
   (lsp-ui-peek--add-prop '(xrefs nil)))
 
 (defun lsp-ui-peek--toggle-file (&optional no-update)
@@ -544,6 +550,7 @@ XREFS is a list of references/definitions."
     (define-key map (kbd "p") 'lsp-ui-peek--select-prev)
     (define-key map (kbd "<up>") 'lsp-ui-peek--select-prev)
     (define-key map (kbd "TAB") 'lsp-ui-peek--toggle-file)
+    (define-key map (kbd "<tab>") 'lsp-ui-peek--toggle-file)
     (define-key map (kbd "q") 'lsp-ui-peek--abort)
     (define-key map (kbd "RET") 'lsp-ui-peek--goto-xref)
     (define-key map (kbd "M-RET") 'lsp-ui-peek--goto-xref-other-window)
@@ -629,8 +636,8 @@ EXTRA is a plist of extra parameters."
                            (append extra (lsp--text-document-position-params))))
 
 (defun lsp-ui-peek--extract-chunk-from-buffer (pos start end)
-  "Return the chunk of code pointed to by POS (a Position object) in the current buffer.
-START and END are delimiters."
+  "Return the chunk of code pointed to by POS (a Position object) in the
+current buffer.  START and END are delimiters."
   (let* ((point (lsp--position-to-point pos))
          (inhibit-field-text-motion t)
          (line-start (1+ (- 1 (/ lsp-ui-peek-peek-height 2))))
@@ -720,7 +727,10 @@ references.  The function returns a list of `ls-xref-item'."
 Returns item(s)."
   (-when-let* ((locs (lsp-request method params))
                (locs (if (listp locs)
-                         locs
+                         (if (symbolp (car locs))
+                             ;; A single plist was returned
+                             (list locs)
+                           locs)
                        (if (vectorp locs)
                            (append locs nil)
                          (list locs)))))

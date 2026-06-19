@@ -4,7 +4,7 @@ lsp-ui
 [![MELPA](https://melpa.org/packages/lsp-ui-badge.svg)](https://melpa.org/#/lsp-ui)
 [![MELPA Stable](https://stable.melpa.org/packages/lsp-ui-badge.svg)](https://stable.melpa.org/#/lsp-ui)
 [![](https://discordapp.com/api/guilds/789885435026604033/widget.png?style=shield)](https://discord.gg/swuxy5AAgT)
-[![Build Status](https://github.com/emacs-lsp/lsp-ui/workflows/CI/badge.svg?branch=master)](https://github.com/emacs-lsp/lsp-ui/actions)
+[![CI](https://github.com/emacs-lsp/lsp-ui/actions/workflows/test.yml/badge.svg)](https://github.com/emacs-lsp/lsp-ui/actions/workflows/test.yml)
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**
@@ -31,7 +31,7 @@ You only have to put `(use-package lsp-ui)` in your config and the package will 
 Or use the builtin package manager.
 
 ```
-M-x ~package-install~ [RET] ~lsp-ui~ [RET]
+M-x package-install [RET] lsp-ui [RET]
 ```
 
 ## lsp-ui-sideline:
@@ -50,6 +50,9 @@ When set to 'line' the information will be updated when user
 changes current line otherwise the information will be updated
 when user changes current point
 - `lsp-ui-sideline-delay` seconds to wait before showing sideline
+- `lsp-ui-sideline-diagnostic-max-lines` default to showing only the
+  first line of diagnostic messages, increase for more verbose
+  messages, decrease if flickering occurs
 
 ## lsp-ui-peek:
 
@@ -94,8 +97,9 @@ Focus into lsp-ui-doc-frame
 
 Customization:
 
-- `lsp-ui-doc-enable` enable lsp-ui-doc
-- `lsp-ui-doc-position` Where to display the doc
+- `lsp-ui-doc-enable` Enable lsp-ui-doc
+- `lsp-ui-doc-position` Where to display the doc (top, bottom or at-point)
+- `lsp-ui-doc-side` Where to display the doc (left or right)
 - `lsp-ui-doc-delay` Number of seconds before showing the doc
 - `lsp-ui-doc-show-with-cursor` When non-nil, move the cursor over a symbol to show the doc
 - `lsp-ui-doc-show-with-mouse` When non-nil, move the mouse pointer over a symbol to show the doc
@@ -108,7 +112,10 @@ Show imenu entries.
 
 Customization:
 
+- `lsp-ui-imenu-kind-position` place to show entries kind
+- `lsp-ui-imenu-buffer-position` place to show the buffer window
 - `lsp-ui-imenu-window-width` set window width
+- `lsp-ui-imenu-window-fix-width` when non-nil, the window will not be resizable (eg. unaffected by `balance-windows`)
 - `lsp-ui-imenu--custom-mode-line-format` mode line format
 - `lsp-ui-imenu-auto-refresh` auto refresh when necessary
 - `lsp-ui-imenu-refresh-delay` delay to refresh imenu

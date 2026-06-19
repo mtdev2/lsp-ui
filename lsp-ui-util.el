@@ -1,11 +1,7 @@
 ;;; lsp-ui-util.el --- Utility module for Lsp-Ui  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2020 Shen, Jen-Chieh
-
-;; Author: Jen-Chieh Shen <jcs090218@gmail.com>
-;; URL: https://github.com/emacs-lsp/lsp-ui
-;; Keywords: languages, tools
-;; Version: 6.2
+;; Copyright (C) 2020-2024 Shen, Jen-Chieh
+;; Copyright (C) 2020-2026 emacs-lsp maintainers
 
 ;;; License
 ;;
@@ -32,9 +28,15 @@
 
 ;;; Code:
 
-(defun lsp-ui-util--safe-kill-timer (timer)
+(require 'face-remap)
+
+(defun lsp-ui-util-safe-kill-timer (timer)
   "Safely kill the TIMER."
   (when (timerp timer) (cancel-timer timer)))
+
+(defun lsp-ui-util-safe-delete-overlay (overlay)
+  "Safely delete the OVERLAY."
+  (when (overlayp overlay) (delete-overlay overlay)))
 
 (defun lsp-ui-util-line-number-display-width ()
   "Safe way to get value from function `line-number-display-width'."
@@ -56,6 +58,10 @@
   "Return column at POS."
   (setq pos (or pos (point)))
   (save-excursion (goto-char pos) (current-column)))
+
+(defun lsp-ui-util-text-scale-factor ()
+  "Return the factor effect by `text-scale-mode'."
+  (or (plist-get (cdr text-scale-mode-remapping) :height) 1))
 
 (provide 'lsp-ui-util)
 ;;; lsp-ui-util.el ends here
